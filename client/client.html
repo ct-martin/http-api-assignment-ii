@@ -3,10 +3,82 @@
 <head>
   <title>Our simple HTTP server</title>
   <link rel="stylesheet" type="text/css" href="/style.css">
-  
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
   <script type="text/babel">
+    const handleResponse = (xhr, method) => {
+      const type = xhr.getResponseHeader('content-type');
+      const content = document.querySelector('#content');
 
+      const h1 = document.createElement('h1');
+      const p = document.createElement('p');
+
+      if(method === 'head') {
+        console.log(`HEAD: ${xhr.statusText}`);
+        h1.textContent = xhr.statusText;
+      } else {
+        if(xhr.response) {
+          const obj = JSON.parse(xhr.response);
+          console.dir(obj);
+
+          if(xhr.status > 200) {
+            h1.textContent = `${obj.id}`;
+            p.textContent = `Message: ${obj.message}`;
+          } else {
+            h1.textContent = xhr.statusText;
+            p.textContent = `${JSON.stringify(obj.users)}`;
+          }
+        } else {
+          h1.textContent = xhr.statusText;
+        }
+      }
+
+      content.innerHTML = '';
+      content.appendChild(h1);
+      content.appendChild(p);
+    };
+
+    const getAjax = (e) => {
+      const url = document.querySelector('#urlField').value;
+      const method = document.querySelector('#methodSelect').value;
+
+      const xhr = new XMLHttpRequest();
+      xhr.open(method, url);
+      xhr.setRequestHeader ('Accept', 'application/json');
+      xhr.onload = () => handleResponse(xhr, method);
+      xhr.send();
+
+      e.preventDefault();
+      return false;
+    };
+
+    const postAjax = (e) => {
+      const url = document.querySelector('#nameForm').getAttribute('action');
+      const method = document.querySelector('#nameForm').getAttribute('method');
+
+      const xhr = new XMLHttpRequest();
+      xhr.open(method, url);
+      xhr.setRequestHeader ('Accept', 'application/json');
+      xhr.onload = () => handleResponse(xhr, method);
+
+      const nameField = document.querySelector('#nameField');
+      const ageField = document.querySelector('#ageField');
+      const formData = `name=${nameField.value}&age=${ageField.value}`;
+      xhr.send(formData);
+
+      e.preventDefault();
+      return false;
+    };
+
+    const init = () => {
+      const getForm = document.querySelector('#userForm');
+      getForm.addEventListener('submit', (e) => getAjax(e));
+
+      const postForm = document.querySelector('#nameForm');
+      postForm.addEventListener('submit', (e) => postAjax(e));
+    };
+
+    window.onload = init;
   </script>
 </head>
 <body>
